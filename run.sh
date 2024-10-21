@@ -16,34 +16,21 @@ else
   echo "Create venv..."
   requirements_file="requirements.txt"
 
-  # Check if Python 3.8 is installed
-  if ! command -v python3.8 >/dev/null 2>&1 || pyenv versions --bare | grep -q "3.8"; then
-    echo "Python 3 not found. Attempting to install 3.8..."
-    if [ "$(uname)" = "Darwin" ] && command -v brew >/dev/null 2>&1; then
-      brew install python@3.8
-    elif [ "$(uname)" = "Linux" ] && command -v apt-get >/dev/null 2>&1; then
-      sudo apt-get update
-      sudo apt-get install python3.8
-    else
-      echo "Please install Python 3.8 manually."
-      exit 1
-    fi
+  # Check if Python 3 is installed
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "Python 3 not found. Please install Python 3 manually."
+    exit 1
   fi
 
-  python3.8 -m venv .venv
+  python3 -m venv .venv
   . .venv/bin/activate
+
+  # Upgrade pip and install the required packages from the requirements.txt
+  python3 -m pip install --upgrade pip
 
   # Check if required packages are installed and install them if not
   if [ -f "${requirements_file}" ]; then
-    installed_packages=$(python3.8 -m pip freeze)
-    while IFS= read -r package; do
-      expr "${package}" : "^#.*" > /dev/null && continue
-      package_name=$(echo "${package}" | sed 's/[<>=!].*//')
-      if ! echo "${installed_packages}" | grep -q "${package_name}"; then
-        echo "${package_name} not found. Attempting to install..."
-        python3.8 -m pip install --upgrade "${package}"
-      fi
-    done < "${requirements_file}"
+    python3 -m pip install -r "${requirements_file}"
   else
     echo "${requirements_file} not found. Please ensure the requirements file with required packages exists."
     exit 1
@@ -59,4 +46,4 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the main script
-python3.8 infer-web.py --pycmd python3.8
+python3 infer-web.py --pycmd python3
